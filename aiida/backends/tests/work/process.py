@@ -229,6 +229,7 @@ class TestExposeProcess(AiidaTestCase):
                 SimpleProcess.run(**self.exposed_inputs(SimpleProcess, namespace='beta'))
 
         ExposeProcess.run(**{'a': Int(1), 'b': Int(2), 'beta': {'a': Int(3), 'b': Int(4)}})
+        ExposeProcess.spec().get_inputs_template()
 
     def test_expose_duplicate_namespaced(self):
         """
@@ -258,6 +259,7 @@ class TestExposeProcess(AiidaTestCase):
                 SimpleProcess.run(**self.exposed_inputs(SimpleProcess, namespace='beta'))
 
         ExposeProcess.run(**{'alef': {'a': Int(1), 'b': Int(2)}, 'beta': {'a': Int(3), 'b': Int(4)}})
+        ExposeProcess.spec().get_inputs_template()
 
     def test_expose_pass_same_dict(self):
         """
@@ -287,6 +289,7 @@ class TestExposeProcess(AiidaTestCase):
 
         sub_inputs = {'a': Int(1), 'b': Int(2)}
         ExposeProcess.run(**{'alef': sub_inputs, 'beta': sub_inputs})
+        ExposeProcess.spec().get_inputs_template()
 
 class TestNestedUnnamespacedExposedProcess(AiidaTestCase):
 
@@ -383,6 +386,9 @@ class TestNestedUnnamespacedExposedProcess(AiidaTestCase):
             **{'a': Int(0), 'b': Int(1), 'c': Int(2), 'd': Int(3), 'e': Int(4), 'f': Str(5)}
         )
 
+    def test_inputs_template(self):
+        self.BaseProcess.spec().get_inputs_template()
+        self.ParentProcess.spec().get_inputs_template
 
 class TestNestedNamespacedExposedProcess(AiidaTestCase):
 
