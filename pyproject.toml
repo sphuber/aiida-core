@@ -71,6 +71,55 @@ markers = [
     "sphinx: set parameters for the sphinx `app` fixture"
 ]
 
+[tool.yapf]
+based_on_style = "google"
+column_limit = 120
+dedent_closing_brackets = true
+coalesce_brackets = true
+align_closing_bracket_with_visual_indent = true
+split_arguments_when_comma_terminated = true
+indent_dictionary_value = false
+
+[tool.mypy]
+show_error_codes = true
+check_untyped_defs = true
+scripts_are_modules = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[[tool.mypy.overrides."aiida.*"]]
+follow_imports = "skip"
+
+[[tool.mypy.overrides."tests.*"]]
+check_untyped_defs = false
+
+[[tool.mypy.overrides."circus.*"]]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides."disk_objectstore.*"]]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides."django.*"]]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides."kiwipy.*"]]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides."numpy.*"]]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides."scipy.*"]]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides."sqlalchemy.*"]]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides."tqdm.*"]]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides."wrapt.*"]]
+ignore_missing_imports = true
+
 [tool.tox]
 legacy_tox_ini = """
 [tox]
