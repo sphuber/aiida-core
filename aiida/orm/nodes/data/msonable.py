@@ -109,9 +109,10 @@ class JSONPreprocessor:
         if isinstance(obj, list):
             return [self.process(item) for item in obj]
         if isinstance(obj, dict):
+            outputs = {}
             for key, value in obj.items():
-                obj[key] = self.process(value)
-            return obj
+                outputs[key] = self.process(value)
+            return outputs
         # Apply processor methods
         for processor in self.process_funcs:
             obj = processor(obj)
@@ -143,9 +144,10 @@ class JSONPostprocessor:
         if isinstance(obj, list):
             return [self.process(item) for item in obj]
         if isinstance(obj, dict):
+            outputs = {}
             for key, value in obj.items():
-                obj[key] = self.process(value)
-            return obj
+                outputs[key] = self.process(value)
+            return outputs
         # Apply processor methods
         for processor in self.process_funcs:
             obj = processor(obj)

@@ -36,7 +36,7 @@ class MsonableClass(MSONable):
 
 def test_construct():
     """Test the ``MsonableData`` constructor."""
-    data = {'a': 1}
+    data = {'a': 1, 'b': [1, 2, 3], 'c': float('inf'), 'd': float('-inf'), 'f': float('nan')}
     obj = MsonableClass(data)
     node = MsonableData(obj)
 
@@ -79,7 +79,7 @@ def test_invalid_class_no_as_dict():
 @pytest.mark.usefixtures('clear_database_before_test')
 def test_store():
     """Test storing a ``MsonableData`` instance."""
-    data = {'a': 1}
+    data = {'a': 1, 'b': [1, 2, 3], 'c': float('inf'), 'd': float('-inf'), 'f': float('nan')}
     obj = MsonableClass(data)
     node = MsonableData(obj)
     assert not node.is_stored
@@ -91,7 +91,8 @@ def test_store():
 @pytest.mark.usefixtures('clear_database_before_test')
 def test_load():
     """Test loading a ``MsonableData`` instance."""
-    data = {'a': 1}
+    data = {'a': 1, 'b': [1, 2, 3], 'c': float('inf'), 'd': float('-inf'), 'f': float('nan')}
+    obj = MsonableClass(data)
     obj = MsonableClass(data)
     node = MsonableData(obj)
     node.store()
@@ -104,7 +105,8 @@ def test_load():
 @pytest.mark.usefixtures('clear_database_before_test')
 def test_obj():
     """Test the ``MsonableData.obj`` property."""
-    data = {'a': 1}
+    data = {'a': 1, 'b': [1, 2, 3], 'c': float('inf'), 'd': float('-inf')}
+
     obj = MsonableClass(data)
     node = MsonableData(obj)
     node.store()
