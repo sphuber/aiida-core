@@ -3,14 +3,7 @@
 #pylint= disable=unused-import, arguments-differ
 import importlib
 
-import numpy as np
-
-from monty.json import MSONable, MontyDecoder, _serialize_callable
-
-try:
-    import bson
-except ImportError:
-    bson = None
+from monty.json import MSONable
 
 from aiida.orm import Data
 
@@ -96,8 +89,7 @@ class JSONPreprocessor:
 
     def __init__(self):
         """Instantiate an Preprocessor object"""
-        super()
-        self.process_funcs = [self.process_additional, self.process_nan]
+        self.process_funcs = [self.process_nan]
 
     @staticmethod
     def process_nan(value):
@@ -110,44 +102,6 @@ class JSONPreprocessor:
         if value != value:  # pylint: disable=comparison-with-itself
             return 'NaN'
         return value
-
-    @staticmethod
-    def process_additional(obj):  # Too
-        """Preprocessing the dict representation before serialisation"""
-        import datetime
-        from uuid import UUID
-
-        if isinstance(obj, datetime.datetime):
-            obj = {'@module': 'datetime', '@class': 'datetime', 'string': obj.__str__()}
-        elif isinstance(obj, UUID):
-            obj = {'@module': 'uuid', '@class': 'UUID', 'string': obj.__str__()}
-
-        if np is not None:
-            if isinstance(obj, np.ndarray):
-                if str(obj.dtype).startswith('complex'):
-                    obj = {
-                        '@module': 'numpy',
-                        '@class': 'array',
-                        'dtype': obj.dtype.__str__(),
-                        'data': [obj.real.tolist(), obj.imag.tolist()],
-                    }
-                else:
-                    obj = {
-                        '@module': 'numpy',
-                        '@class': 'array',
-                        'dtype': obj.dtype.__str__(),
-                        'data': obj.tolist(),
-                    }
-            elif isinstance(obj, np.generic):
-                return obj.item()
-
-        if bson is not None:
-            if isinstance(obj, bson.objectid.ObjectId):
-                obj = {'@module': 'bson.objectid', '@class': 'ObjectId', 'oid': str(obj)}
-
-        if callable(obj) and not isinstance(obj, MSONable):
-            return _serialize_callable(obj)
-        return obj
 
     def process(self, obj):
         """Preprocessing before saving the object as a JSON in PostgreSQL"""
@@ -169,7 +123,7 @@ class JSONPostprocessor:
 
     def __init__(self):
         """Instantiate an Postprocessor object"""
-        self.process_funcs = [self.process_nan, self.process_additional]
+        self.process_funcs = [self.process_nan]
 
     @staticmethod
     def process_nan(obj):
@@ -182,11 +136,6 @@ class JSONPostprocessor:
         if obj == 'NaN':
             return float('nan')
         return obj
-
-    @staticmethod
-    def process_additional(obj):
-        """Post-processing for supporting additional data types after deserialization"""
-        return MontyDecoder().process_decoded(obj)
 
     def process(self, obj):
         """Preprocessing before saving the object as a JSON in PostgreSQL"""
