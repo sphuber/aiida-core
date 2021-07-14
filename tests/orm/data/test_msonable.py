@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for the :class:`aiida.orm.nodes.data.msonable.MsonableData` data type."""
-from monty.json import MSONable
+from datetime import datetime
+from monty.json import MSONable, MontyEncoder
+import numpy as np
 import pymatgen
 import pytest
 
@@ -28,15 +30,17 @@ class MsonableClass(MSONable):
             'data': self._data,
         }
 
-    @classmethod
-    def from_dict(cls, d):
-        """Reconstruct an instance from a serialized version."""
-        return cls(d['data'])
+    # We use the default `from_dict` method which have extended support for some
+    # non-JSON serializable classes such as numpy array and datetime using the MontyDecoder
+    #@classmethod
+    #def from_dict(cls, d):
+    #    """Reconstruct an instance from a serialized version."""
+    #    return cls(d['data'])
 
 
 def test_construct():
     """Test the ``MsonableData`` constructor."""
-    data = {'a': 1, 'b': [1, 2, 3], 'c': float('inf'), 'd': float('-inf'), 'f': float('nan')}
+    data = {'a': 1, 'b': [1, 2, 3], 'c': float('inf'), 'd': float('-inf'), 'f': float('nan'), 'e': np.arange(10)}
     obj = MsonableClass(data)
     node = MsonableData(obj)
 
@@ -79,7 +83,15 @@ def test_invalid_class_no_as_dict():
 @pytest.mark.usefixtures('clear_database_before_test')
 def test_store():
     """Test storing a ``MsonableData`` instance."""
-    data = {'a': 1, 'b': [1, 2, 3], 'c': float('inf'), 'd': float('-inf'), 'f': float('nan')}
+    data = {
+        'a': 1,
+        'b': [1, 2, 3],
+        'c': float('inf'),
+        'd': float('-inf'),
+        'f': float('nan'),
+        'e': np.arange(10),
+        'g': datetime.now()
+    }
     obj = MsonableClass(data)
     node = MsonableData(obj)
     assert not node.is_stored
@@ -91,7 +103,15 @@ def test_store():
 @pytest.mark.usefixtures('clear_database_before_test')
 def test_load():
     """Test loading a ``MsonableData`` instance."""
-    data = {'a': 1, 'b': [1, 2, 3], 'c': float('inf'), 'd': float('-inf'), 'f': float('nan')}
+    data = {
+        'a': 1,
+        'b': [1, 2, 3],
+        'c': float('inf'),
+        'd': float('-inf'),
+        'f': float('nan'),
+        'e': np.arange(10),
+        'g': datetime.now()
+    }
     obj = MsonableClass(data)
     obj = MsonableClass(data)
     node = MsonableData(obj)
@@ -105,18 +125,30 @@ def test_load():
 @pytest.mark.usefixtures('clear_database_before_test')
 def test_obj():
     """Test the ``MsonableData.obj`` property."""
-    data = {'a': 1, 'b': [1, 2, 3], 'c': float('inf'), 'd': float('-inf')}
+    data1 = {'a': 1, 'b': [1, 2, 3], 'c': float('inf'), 'd': float('-inf')}
+    data2 = {'a': 1, 'b': [1, 2, 3], 'c': float('inf'), 'd': float('-inf'), 'e': np.arange(10), 'g': datetime.now()}
 
-    obj = MsonableClass(data)
+    obj = MsonableClass(data1)
     node = MsonableData(obj)
     node.store()
 
     assert isinstance(node.obj, MsonableClass)
-    assert node.obj.data == data
+    assert node.obj.data == data1
 
     loaded = load_node(node.pk)
     assert isinstance(node.obj, MsonableClass)
-    assert loaded.obj.data == data
+    assert loaded.obj.data == data1
+
+    obj = MsonableClass(data2)
+    node = MsonableData(obj)
+    node.store()
+
+    assert isinstance(node.obj, MsonableClass)
+    assert node.get_attribute('data')['e'] == MontyEncoder().default(data2['e'])
+
+    loaded = load_node(node.pk)
+    assert isinstance(node.obj, MsonableClass)
+    assert np.all(loaded.obj.data['e'] == data2['e'])
 
 
 @pytest.mark.usefixtures('clear_database_before_test')

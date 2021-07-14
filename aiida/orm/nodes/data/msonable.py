@@ -2,8 +2,8 @@
 """Data plugin for classes that implement the ``MSONable`` class of the ``monty`` library."""
 #pylint= disable=unused-import, arguments-differ
 import importlib
-
-from monty.json import MSONable
+from json import loads, dumps
+from monty.json import MSONable, MontyEncoder
 
 from aiida.orm import Data
 
@@ -89,7 +89,7 @@ class JSONPreprocessor:
 
     def __init__(self):
         """Instantiate an Preprocessor object"""
-        self.process_funcs = [self.process_nan]
+        self.process_funcs = [self.process_using_monty_encoder, self.process_nan]
 
     @staticmethod
     def process_nan(value):
@@ -103,15 +103,27 @@ class JSONPreprocessor:
             return 'NaN'
         return value
 
+    @staticmethod
+    def process_using_monty_encoder(value):
+        """Process the object using the MontyEncoder"""
+        return loads(dumps(value, cls=MontyEncoder))
+
     def process(self, obj):
+        """Process the object"""
+        out = self.process_using_monty_encoder(
+            obj
+        )  # This is needed to have extended supports for objects contains datetime and numpy arrays
+        return self._process(out)
+
+    def _process(self, obj):
         """Preprocessing before saving the object as a JSON in PostgreSQL"""
         # Process nested list and dictionary
         if isinstance(obj, list):
-            return [self.process(item) for item in obj]
+            return [self._process(item) for item in obj]
         if isinstance(obj, dict):
             outputs = {}
             for key, value in obj.items():
-                outputs[key] = self.process(value)
+                outputs[key] = self._process(value)
             return outputs
         # Apply processor methods
         for processor in self.process_funcs:
