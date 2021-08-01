@@ -20,9 +20,9 @@ import numpy
 from aiida.common.exceptions import ValidationError
 from aiida.common.utils import join_labels, prettify_labels
 
-from .kpoints import KpointsData
+from ..kpoints import KpointsData
 
-__all__ = ('BandsData', 'find_bandgap')
+__all__ = ('BandsData', 'find_bandgap', 'get_bands_and_parents_structure')
 
 
 def prepare_header_comment(uuid, plot_info, comment_char='#'):

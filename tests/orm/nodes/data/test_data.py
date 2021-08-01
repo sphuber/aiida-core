@@ -81,6 +81,13 @@ def generate_class_instance():
             instance.set_y(numpy.arange(5), 'ydata', 'm')
             return instance
 
+        if data_class is orm.ElectronicBandsData:
+            kpoints = orm.KpointsData()
+            kpoints.set_cell([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+            kpoints.set_kpoints([[0., 0., 0.], [0.1, 0.1, 0.1]])
+            instance = data_class(kpoints, numpy.array([[[0, 1], [1, 1]], [[0, 1], [2, 2]]], dtype=numpy.float64))
+            return instance
+
         if data_class is orm.ProjectionData:
 
             my_real_hydrogen_dict = {

@@ -7,28 +7,19 @@
 # For further information on the license, see the LICENSE.txt file        #
 # For further information please visit http://www.aiida.net               #
 ###########################################################################
-"""Module with `Node` sub classes for array based data structures."""
+"""Module with `Node` sub classes for band structure data types."""
 
 # AUTO-GENERATED
 
 # yapf: disable
 # pylint: disable=wildcard-import
 
-from .array import *
 from .bands import *
-from .kpoints import *
-from .projection import *
-from .trajectory import *
-from .xy import *
+from .electronic import *
 
 __all__ = (
-    'ArrayData',
     'BandsData',
     'ElectronicBandsData',
-    'KpointsData',
-    'ProjectionData',
-    'TrajectoryData',
-    'XyData',
     'find_bandgap',
     'get_bands_and_parents_structure',
 )
