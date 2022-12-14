@@ -31,7 +31,7 @@ def test_constructor(kpoints, bands):
     assert not node.is_stored
 
     fermi_level = 2.3
-    node = ElectronicBandsData(kpoints, bands, fermi_level)
+    node = ElectronicBandsData(kpoints, bands, fermi_level=fermi_level)
     assert isinstance(node, ElectronicBandsData)
     assert not node.is_stored
     assert node.fermi_level == fermi_level
@@ -61,3 +61,20 @@ def test_fermi_level(kpoints, bands):
 
     with pytest.raises(ModificationNotAllowed):
         node.fermi_level = 1.0
+
+
+def test_analyse_bands():
+    """."""
+    kpoints = KpointsData()
+    kpoints.set_kpoints([[0., 0., 0.], [1, 1, 1]])
+
+    bands = numpy.array([[[1, 2, 3], [1.1, 2.1, 3.1]], [[1, 2, 3], [1.1, 2.1, 3.1]]], dtype=numpy.float64)
+    occupations = numpy.array([[[1, 1, 0], [1, 1, 0]], [[1, 1, 0], [1, 1, 0]]], dtype=numpy.float64)
+
+    node = ElectronicBandsData(kpoints, bands, occupations)
+    node.analyse_bands()
+
+    assert numpy.isclose(node.homo, 2.1)
+    assert numpy.isclose(node.lumo, 3)
+    assert numpy.isclose(node.indirect_gap, 0.9)
+    assert numpy.isclose(node.direct_gap, 1.0)
