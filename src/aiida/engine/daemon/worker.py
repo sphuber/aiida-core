@@ -61,6 +61,11 @@ def start_daemon_worker(foreground: bool = False) -> None:
     for s in signals:
         runner.loop.add_signal_handler(s, lambda s=s: asyncio.create_task(shutdown_worker(runner)))
 
+    import time
+
+    time.sleep(5)
+    raise RuntimeError('failed to start')
+
     try:
         LOGGER.info('Starting a daemon worker')
         runner.start()

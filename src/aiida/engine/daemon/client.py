@@ -689,6 +689,12 @@ class DaemonClient:
             'debug': False,
             'statsd': True,
             'pidfile': self.circus_pid_file,
+            'plugins': [
+                {
+                    'use': 'circus.plugins.flapping.Flapping',
+                    'window': 10,
+                }
+            ],
             'watchers': [
                 {
                     'cmd': ' '.join(self.cmd_start_daemon_worker),
