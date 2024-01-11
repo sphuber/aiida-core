@@ -197,7 +197,8 @@ class DynamicEntryPointCommandGroup(VerdiCommandGroup):
             }
             for metadata in field_info.metadata:
                 for metadata_key, metadata_value in metadata.items():
-                    options_spec[key][metadata_key] = metadata_value
+                    if metadata_key in ('priority', 'short_name', 'option_cls'):
+                        options_spec[key][metadata_key] = metadata_value
 
         options_ordered = []
 

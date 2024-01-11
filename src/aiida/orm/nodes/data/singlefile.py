@@ -16,6 +16,7 @@ import pathlib
 import typing as t
 
 from aiida.common import exceptions
+from aiida.common.pydantic import MetadataField
 
 from .data import Data
 
@@ -29,6 +30,13 @@ class SinglefileData(Data):
 
     DEFAULT_FILENAME = 'file.txt'
 
+    class Model(Data.Model):
+        content: bytes = MetadataField(
+            description='The file content.',
+            model_to_orm=lambda model: io.BytesIO(model.content),  # type: ignore[attr-defined]
+        )
+        filename: t.Optional[str] = MetadataField(None, description='The filename. Defaults to `file.txt`.')
+
     @classmethod
     def from_string(cls, content: str, filename: str | pathlib.Path | None = None, **kwargs: t.Any) -> 'SinglefileData':
         """Construct a new instance and set ``content`` as its contents.
@@ -39,7 +47,11 @@ class SinglefileData(Data):
         return cls(io.StringIO(content), filename, **kwargs)
 
     def __init__(
-        self, file: str | pathlib.Path | t.IO, filename: str | pathlib.Path | None = None, **kwargs: t.Any
+        self,
+        file: str | pathlib.Path | t.IO | None = None,
+        filename: str | pathlib.Path | None = None,
+        content: str | pathlib.Path | t.IO | None = None,
+        **kwargs: t.Any,
     ) -> None:
         """Construct a new instance and set the contents to that of the file.
 
@@ -49,8 +61,18 @@ class SinglefileData(Data):
         """
         super().__init__(**kwargs)
 
+        if file is not None and content is not None:
+            raise ValueError('cannot specify both `file` and `content`.')
+
+        if content is not None:
+            file = content
+
         if file is not None:
             self.set_file(file, filename=filename)
+
+    @property
+    def content(self) -> bytes:
+        return self.get_content(mode='rb')
 
     @property
     def filename(self) -> str:
@@ -109,6 +131,14 @@ class SinglefileData(Data):
         """
         with self.base.repository.as_path(self.filename) as filepath:
             yield filepath
+
+    @t.overload
+    def get_content(self, mode: t.Literal['rb']) -> bytes:
+        ...
+
+    @t.overload
+    def get_content(self, mode: t.Literal['r']) -> str:
+        ...
 
     def get_content(self, mode: str = 'r') -> str | bytes:
         """Return the content of the single file stored for this data node.
@@ -179,3 +209,11 @@ class SinglefileData(Data):
             )
 
         return True
+
+
+# Dirty hack to remove the ``repository_content`` field inherited by from the ``Node.Model`` base class. It used to be
+# supported in pydantic v1 to exclude fields when inheriting from a base class, but this was removed in v2. See this
+# thread for a discussion: https://github.com/pydantic/pydantic/discussions/2686
+# if type(SinglefileData.__fields_set__) == set:
+#     SinglefileData.__fields_set__.remove('repository_content')
+del SinglefileData.Model.__fields__['repository_content']  # type: ignore[attr-defined]

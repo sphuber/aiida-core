@@ -14,7 +14,10 @@ from copy import deepcopy
 from functools import singledispatchmethod
 from pprint import pformat
 
+from pydantic import BaseModel
+
 from aiida.common.lang import isidentifier
+from aiida.common.pydantic import get_metadata
 
 __all__ = (
     'QbField',
@@ -418,29 +421,72 @@ class EntityFieldMeta(ABCMeta):
         if current_fields is not None and not isinstance(current_fields, QbFields):
             raise ValueError(f"class '{cls}' already has a `fields` attribute set")
 
-        # Find all fields
         fields = {}
-        # Note: inspect.getmembers causes loading of AiiDA to fail
-        for key, attr in ((key, attr) for subcls in reversed(cls.__mro__) for key, attr in subcls.__dict__.items()):
-            # __qb_fields__ should be a list of QbField instances
-            if key == '__qb_fields__':
-                assert isinstance(
-                    attr, t.Sequence
-                ), f"class '{cls}' has a '__qb_fields__' attribute, but it is not a sequence"
-                for field in attr:
-                    if not isinstance(field, QbField):
-                        raise ValueError(f"__qb_fields__ attribute of class '{cls}' must be list of QbField instances")
-                    if field.key == 'value':
-                        if dtype := getattr(cls, '_type', None):
-                            value_field = add_field(
-                                'value',
-                                dtype=dtype,
-                                doc='The value of the data',
-                            )
 
-                            fields[field.key] = value_field
-                    else:
-                        fields[field.key] = field
+        # If the class has an attribute ``Model`` that is a subclass of :class:`pydantic.BaseModel`, parse the model
+        # fields to build up the ``fields`` class attribute, which is used to allow specifying ``QueryBuilder`` filters
+        # programmatically.
+        if hasattr(cls, 'Model') and issubclass(cls.Model, BaseModel):
+            # If the class itself directly specifies the ``Model`` attribute, check that it is valid. Here, the check
+            # ``cls.__dict__`` is used instead of ``hasattr`` as the former only returns true if the class itself
+            # defines the attribute and does not just inherit it from a base class. In that case, this check will
+            # already have been performed for that subclass.
+
+            # When a class defines a ``Model``, the following check ensures that the model inherits from the same bases
+            # as the class containing the attribute itself. For example, if ``cls`` inherits from ``ClassA`` and
+            # ``ClassB`` that each define a ``Model``, the ``cls.Model`` class should inherit from both ``ClassA.Model``
+            # and ``ClassBModel`` or it will be losing the attributes of some of the models.
+            if 'Model' in cls.__dict__:
+                # Get all the base classes in the MRO of this class that define a class attribute ``Model`` that is a
+                # subclass of pydantic's ``BaseModel`` and not the class itself
+                cls_bases_with_model = [
+                    base
+                    for base in cls.__mro__
+                    if base is not cls and 'Model' in base.__dict__ and issubclass(base.Model, BaseModel)  # type: ignore[attr-defined]
+                ]
+
+                # Now get the "leaf" bases, i.e., those base classes in the subclass list that themselves do not have a
+                # subclass in the tree. This set should be the base classes for the class' ``Model`` attribute.
+                cls_bases_with_model_leaves = {
+                    base
+                    for base in cls_bases_with_model
+                    if all(
+                        not issubclass(b.Model, base.Model)  # type: ignore[attr-defined]
+                        for b in cls_bases_with_model
+                        if b is not base
+                    )
+                }
+
+                cls_model_bases = {base.Model for base in cls_bases_with_model_leaves}  # type: ignore[attr-defined]
+
+                # If the base class does not have a base that defines a model, it means the ``Model`` should simply have
+                # ``pydantic.BaseModel`` as its sole base.
+                if not cls_model_bases:
+                    cls_model_bases = {
+                        BaseModel,
+                    }
+
+                # Get the set of bases of ``cls.Model`` that are a subclass of :class:`pydantic.BaseModel`.
+                model_bases = {base for base in cls.Model.__bases__ if issubclass(base, BaseModel)}
+
+                # For ``cls.Model`` to be valid, the bases that contain a model, should equal to the leaf bases of the
+                # ``cls`` itself that also define a model.
+                if model_bases != cls_model_bases and not getattr(cls, '_SKIP_MODEL_INHERITANCE_CHECK', False):
+                    bases = [f'{e.__module__}.{e.__name__}.Model' for e in cls_bases_with_model_leaves]
+                    raise RuntimeError(
+                        f'`{cls.__name__}.Model` does not subclass all necessary base classes. It should be: '
+                        f'`class Model({", ".join(sorted(bases))}):`'
+                    )
+
+            for key, field in cls.Model.model_fields.items():
+                fields[key] = add_field(
+                    key,
+                    alias=get_metadata(field, 'alias', None),
+                    dtype=field.annotation,
+                    doc=field.description,
+                    is_attribute=get_metadata(field, 'is_attribute', False),
+                    is_subscriptable=get_metadata(field, 'is_subscriptable', False),
+                )
 
         cls.fields = QbFields({key: fields[key] for key in sorted(fields)})
 
