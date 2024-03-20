@@ -45,6 +45,7 @@ class InstalledCode(Code):
             ...,
             title='Computer',
             description='The remote computer on which the executable resides.',
+            orm_to_model=lambda node: node.computer.label,
             short_name='-Y',
             priority=2,
         )
@@ -52,6 +53,7 @@ class InstalledCode(Code):
             ...,
             title='Filepath executable',
             description='Filepath of the executable on the remote computer.',
+            orm_to_model=lambda node: str(node.filepath_executable),  # type: ignore[attr-defined]
             short_name='-X',
             priority=1,
         )
