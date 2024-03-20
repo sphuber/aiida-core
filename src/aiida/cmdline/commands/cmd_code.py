@@ -26,10 +26,10 @@ def verdi_code():
     """Setup and manage codes."""
 
 
-def create_code(ctx: click.Context, cls, non_interactive: bool, **kwargs):
+def create_code(ctx: click.Context, cls, **kwargs):
     """Create a new `Code` instance."""
     try:
-        instance = cls(**kwargs)
+        instance = cls.from_model(cls.Model(**kwargs))
     except (TypeError, ValueError) as exception:
         echo.echo_critical(f'Failed to create instance `{cls}`: {exception}')
 

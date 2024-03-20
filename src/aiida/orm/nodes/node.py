@@ -188,13 +188,17 @@ class Node(Entity['BackendNode', NodeCollection], metaclass=AbstractNodeMeta):
 
     class Model(Entity.Model):
         uuid: Optional[str] = MetadataField(
-            None, description='The UUID of the node', is_attribute=False, exclude_to_orm=True
+            None, description='The UUID of the node', is_attribute=False, exclude_to_orm=True, exclude_from_cli=True
         )
         node_type: Optional[str] = MetadataField(
-            None, description='The type of the node', is_attribute=False, exclude_to_orm=True
+            None, description='The type of the node', is_attribute=False, exclude_to_orm=True, exclude_from_cli=True
         )
         process_type: Optional[str] = MetadataField(
-            None, description='The process type of the node', is_attribute=False, exclude_to_orm=True
+            None,
+            description='The process type of the node',
+            is_attribute=False,
+            exclude_to_orm=True,
+            exclude_from_cli=True,
         )
         repository_metadata: Optional[Dict[str, Any]] = MetadataField(
             None,
@@ -202,21 +206,35 @@ class Node(Entity['BackendNode', NodeCollection], metaclass=AbstractNodeMeta):
             is_attribute=False,
             orm_to_model=lambda node: node.base.repository.metadata,  # type: ignore[attr-defined]
             exclude_to_orm=True,
+            exclude_from_cli=True,
         )
         ctime: Optional[datetime.datetime] = MetadataField(
-            None, description='The creation time of the node', is_attribute=False, exclude_to_orm=True
+            None,
+            description='The creation time of the node',
+            is_attribute=False,
+            exclude_to_orm=True,
+            exclude_from_cli=True,
         )
         mtime: Optional[datetime.datetime] = MetadataField(
-            None, description='The modification time of the node', is_attribute=False, exclude_to_orm=True
+            None,
+            description='The modification time of the node',
+            is_attribute=False,
+            exclude_to_orm=True,
+            exclude_from_cli=True,
         )
-        label: Optional[str] = MetadataField(None, description='The node label', is_attribute=False)
-        description: Optional[str] = MetadataField(None, description='The node description', is_attribute=False)
+        label: Optional[str] = MetadataField(
+            None, description='The node label', is_attribute=False, exclude_from_cli=True
+        )
+        description: Optional[str] = MetadataField(
+            None, description='The node description', is_attribute=False, exclude_from_cli=True
+        )
         attributes: Optional[Dict[str, Any]] = MetadataField(
             None,
             description='The node attributes',
             is_attribute=False,
             orm_to_model=lambda node: node.base.attributes.all,  # type: ignore[attr-defined]
             is_subscriptable=True,
+            exclude_from_cli=True,
         )
         extras: Optional[Dict[str, Any]] = MetadataField(
             None,
@@ -224,6 +242,7 @@ class Node(Entity['BackendNode', NodeCollection], metaclass=AbstractNodeMeta):
             is_attribute=False,
             orm_to_model=lambda node: node.base.extras.all,  # type: ignore[attr-defined]
             is_subscriptable=True,
+            exclude_from_cli=True,
         )
         computer: Optional[int] = MetadataField(
             None,
@@ -231,12 +250,15 @@ class Node(Entity['BackendNode', NodeCollection], metaclass=AbstractNodeMeta):
             is_attribute=False,
             orm_to_model=lambda node: node.computer.pk if node.computer else None,  # type: ignore[attr-defined]
             orm_class=Computer,
+            exclude_from_cli=True,
         )
-        user: int = MetadataField(
+        user: Optional[int] = MetadataField(
+            None,
             description='The PK of the user who owns the node',
             is_attribute=False,
             orm_to_model=lambda node: node.user.pk,  # type: ignore[attr-defined]
             orm_class=User,
+            exclude_from_cli=True,
         )
         repository_content: Optional[dict[str, bytes]] = MetadataField(
             None,
@@ -247,6 +269,7 @@ class Node(Entity['BackendNode', NodeCollection], metaclass=AbstractNodeMeta):
                 key: base64.encodebytes(content)
                 for key, content in node.base.repository.serialize_content().items()  # type: ignore[attr-defined]
             },
+            exclude_from_cli=True,
         )
 
     def __init__(

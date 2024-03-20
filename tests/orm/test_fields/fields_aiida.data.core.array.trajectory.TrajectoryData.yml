@@ -19,5 +19,5 @@ source: QbDictField('source', dtype=Optional[dict], is_attribute=True, is_subscr
 symbols: QbArrayField('symbols', dtype=List[str], is_attribute=True)
 units_positions: QbStrField('units_positions', dtype=str, is_attribute=True)
 units_times: QbStrField('units_times', dtype=str, is_attribute=True)
-user: QbNumericField('user', dtype=int, is_attribute=False)
+user: QbNumericField('user', dtype=Optional[int], is_attribute=False)
 uuid: QbStrField('uuid', dtype=Optional[str], is_attribute=False)

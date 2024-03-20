@@ -18,5 +18,5 @@ source: QbDictField('source', dtype=Optional[dict], is_attribute=True, is_subscr
 source_list: QbArrayField('source_list', dtype=List[str], is_attribute=True)
 stash_mode: QbField('stash_mode', dtype=StashMode, is_attribute=True)
 target_basepath: QbStrField('target_basepath', dtype=str, is_attribute=True)
-user: QbNumericField('user', dtype=int, is_attribute=False)
+user: QbNumericField('user', dtype=Optional[int], is_attribute=False)
 uuid: QbStrField('uuid', dtype=Optional[str], is_attribute=False)

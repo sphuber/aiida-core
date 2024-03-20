@@ -34,5 +34,5 @@ scheduler_lastchecktime: QbStrField('scheduler_lastchecktime', dtype=Optional[st
 scheduler_state: QbStrField('scheduler_state', dtype=Optional[str], is_attribute=True)
 sealed: QbField('sealed', dtype=bool, is_attribute=True)
 state: QbStrField('state', dtype=Optional[str], is_attribute=True)
-user: QbNumericField('user', dtype=int, is_attribute=False)
+user: QbNumericField('user', dtype=Optional[int], is_attribute=False)
 uuid: QbStrField('uuid', dtype=Optional[str], is_attribute=False)

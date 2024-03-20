@@ -23,7 +23,7 @@ repository_metadata: QbDictField('repository_metadata', dtype=Optional[Dict[str,
   is_attribute=False)
 source: QbDictField('source', dtype=Optional[dict], is_attribute=True, is_subscriptable=True)
 use_double_quotes: QbField('use_double_quotes', dtype=bool, is_attribute=True)
-user: QbNumericField('user', dtype=int, is_attribute=False)
+user: QbNumericField('user', dtype=Optional[int], is_attribute=False)
 uuid: QbStrField('uuid', dtype=Optional[str], is_attribute=False)
 with_mpi: QbField('with_mpi', dtype=Optional[bool], is_attribute=True)
 wrap_cmdline_params: QbField('wrap_cmdline_params', dtype=bool, is_attribute=True)

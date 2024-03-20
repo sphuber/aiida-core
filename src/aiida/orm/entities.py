@@ -183,6 +183,7 @@ class Entity(abc.ABC, Generic[BackendEntityType, CollectionType], metaclass=Enti
             description='The primary key of the entity. Can be `None` if the entity is not yet stored.',
             is_attribute=False,
             exclude_to_orm=True,
+            exclude_from_cli=True,
         )
 
     @classmethod
