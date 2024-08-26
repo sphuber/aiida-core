@@ -56,20 +56,23 @@ class ProcessLauncher(plumpy.ProcessLauncher):
         from aiida.orm import Data, load_node
         from aiida.orm.utils import serialize
 
+        print('ProcessLauncher._continue: loading', pid, nowait)
         try:
             node = load_node(pk=pid)
-        except (exceptions.MultipleObjectsError, exceptions.NotExistent):
+        except (exceptions.MultipleObjectsError, exceptions.NotExistent) as exception:
             # In this case, the process node corresponding to the process id, cannot be resolved uniquely or does not
             # exist. The latter being the most common case, where someone deleted the node, before the process was
             # properly terminated. Since the node is never coming back and so the process will never be able to continue
             # we raise `Return` instead of `TaskRejected` because the latter would cause the task to be resent and start
             # to ping-pong between RabbitMQ and the daemon workers.
+            print('ProcessLauncher._continue: excepting', exception)
             LOGGER.exception('Cannot continue process<%d>', pid)
             return False
 
         if node.is_terminated:
             LOGGER.info('not continuing process<%d> which is already terminated with state %s', pid, node.process_state)
 
+            print('ProcessLauncher._continue: already terminated', node.process_state)
             future = kiwipy.Future()
 
             if node.is_finished:
@@ -81,10 +84,14 @@ class ProcessLauncher(plumpy.ProcessLauncher):
             elif node.is_killed:
                 future.set_exception(plumpy.KilledError())
 
-            return future.result()
+            result = future.result()
+            print('result', result)
+            return result
 
+        print('ProcessLauncher._continue: continuing', pid, nowait)
         try:
-            result = await super()._continue(communicator, pid, nowait, tag)
+            result = await super()._continue(communicator, pid, True, tag)
+            print('RESULT', result)
         except ImportError as exception:
             message = 'the class of the process could not be imported.'
             self.handle_continue_exception(node, exception, message)
@@ -111,6 +118,7 @@ class ProcessLauncher(plumpy.ProcessLauncher):
             # current subscribers. This means that this will only occur when the tasks is resent to the *same* daemon
             # worker. If another worker were to receive it, no exception would be raised as the check is client and not
             # server based.
+            print('ProcessLauncher._continue: duplicate error')
             LOGGER.exception(
                 'A subscriber with the process id<%d> already exists, which most likely means this worker is already '
                 'working on it and this task was sent as a duplicate by mistake. Deleting the task now.',
@@ -122,10 +130,12 @@ class ProcessLauncher(plumpy.ProcessLauncher):
             # where asyncio.CancelledError inherits from Exception
             raise
         except Exception as exception:
+            print('ProcessLauncher._continue: exception', exception)
             message = 'failed to recreate the process instance in order to continue it.'
             self.handle_continue_exception(node, exception, message)
             raise
 
+        print('ProcessLauncher._continue: done')
         # Ensure that the result is serialized such that communication thread won't have to do database operations
         try:
             serialized = serialize.serialize(result)

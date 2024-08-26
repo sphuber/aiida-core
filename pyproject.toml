@@ -57,6 +57,7 @@ readme = 'README.md'
 requires-python = '>=3.9'
 
 [project.entry-points.'aiida.brokers']
+'core.azure' = 'aiida.brokers.azure.broker:AzureBroker'
 'core.rabbitmq' = 'aiida.brokers.rabbitmq.broker:RabbitmqBroker'
 
 [project.entry-points.'aiida.calculations']
