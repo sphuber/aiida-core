@@ -182,13 +182,19 @@ class PsqlDosBackend(StorageBackend):
         return self._session_factory()
 
     def close(self) -> None:
+        from sqlalchemy.orm.session import _sessions
+
         if self._session_factory is None:
             return  # the instance is already closed, and so this is a no-op
-        # close the connection
+
+        for session in _sessions.values():
+            if session.bind == self._session_factory.bind:
+                session.close()
 
         engine = self._session_factory.bind
         if engine is not None:
             engine.dispose()  # type: ignore[union-attr]
+
         self._session_factory.expunge_all()
         self._session_factory.close()
         self._session_factory = None
